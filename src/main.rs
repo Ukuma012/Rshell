@@ -5,7 +5,7 @@ use std::process::{Child, Command, Stdio};
 
 fn main() {
     loop {
-        print!("> ");
+        print!("shell> ");
         stdout().flush().unwrap();
 
         let mut input = String::new();
@@ -29,7 +29,10 @@ fn main() {
 
                     previous_command = None;
                 }
-                "exit" => return,
+                "exit" => {
+                    println!("bye!");
+                    return;
+                }
                 command => {
                     let stdin = previous_command.map_or(Stdio::inherit(), |output: Child| {
                         Stdio::from(output.stdout.unwrap())
