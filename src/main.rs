@@ -17,7 +17,7 @@ fn main() {
         while let Some(command) = commands.next() {
             let mut parts = command.trim().split_whitespace();
             let command = parts.next().unwrap();
-            let args = parts;
+            let mut args = parts.peekable();
 
             match command {
                 "cd" => {
@@ -44,15 +44,29 @@ fn main() {
                         Stdio::inherit()
                     };
 
-                    let redirect_contain = args.clone().peekable().peek() == Some(&">");
-                    if redirect_contain {
-                        println!("contain")
-                    } else {
-                        println!("not contain")
+                    let rawstring;
+                    let mut filename = "";
+                    let mut arg_vecs = Vec::new();
+                    while let Some(arg) = args.next_if(|s| !s.contains('>')) {
+                        arg_vecs.push(arg);
+                    }
+
+                    println!("Printing args");
+                    for arg in args.clone() {
+                        println!("{}", arg);
+                    }
+
+                    println!("Printing arg_vecs");
+                    for arg_vec in arg_vecs.clone() {
+                        println!("{}", arg_vec);
+                    }
+
+                    if let Some(redir) = args.peek() {
+                        rawstring = args.collect::<Vec<&str>>().concat();
                     }
 
                     let output = Command::new(command)
-                        .args(args)
+                        .args(arg_vecs)
                         .stdin(stdin)
                         .stdout(stdout)
                         .spawn();
