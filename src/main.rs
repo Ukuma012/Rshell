@@ -56,7 +56,7 @@ fn main() {
                         }
                         Err(_e) => {
                             previous_command = None;
-                            eprintln!("command not found");
+                            eprintln!("Command \"{}\" not found", command);
                         }
                     };
                 }
