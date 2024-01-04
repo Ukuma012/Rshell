@@ -44,6 +44,13 @@ fn main() {
                         Stdio::inherit()
                     };
 
+                    let redirect_contain = args.clone().peekable().peek() == Some(&">");
+                    if redirect_contain {
+                        println!("contain")
+                    } else {
+                        println!("not contain")
+                    }
+
                     let output = Command::new(command)
                         .args(args)
                         .stdin(stdin)
