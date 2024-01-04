@@ -1,3 +1,5 @@
+use nix::fcntl::{open, OFlag};
+use nix::sys::stat::Mode;
 use std::env;
 use std::io::{stdin, stdout, Write};
 use std::path::Path;
@@ -44,26 +46,23 @@ fn main() {
                         Stdio::inherit()
                     };
 
-                    let rawstring;
-                    let mut filename = "";
+                    let mut output_file = "";
                     let mut arg_vecs = Vec::new();
                     while let Some(arg) = args.next_if(|s| !s.contains('>')) {
                         arg_vecs.push(arg);
                     }
 
-                    println!("Printing args");
-                    for arg in args.clone() {
-                        println!("{}", arg);
-                    }
-
-                    println!("Printing arg_vecs");
-                    for arg_vec in arg_vecs.clone() {
-                        println!("{}", arg_vec);
-                    }
-
                     if let Some(redir) = args.peek() {
-                        rawstring = args.collect::<Vec<&str>>().concat();
+                        if redir.contains('>') {
+                            args.next();
+                            if let Some(file) = args.next() {
+                                output_file = file;
+                            }
+                        }
                     }
+
+                    let flags = OFlag::O_RDWR | OFlag::O_CREAT;
+                    let fd = open(output_file, flags, Mode::S_IRUSR | Mode::S_IWUSR).unwrap();
 
                     let output = Command::new(command)
                         .args(arg_vecs)
