@@ -1,7 +1,9 @@
 use nix::fcntl::{open, OFlag};
 use nix::sys::stat::Mode;
 use std::env;
+use std::fs::File;
 use std::io::{stdin, stdout, Write};
+use std::os::fd::FromRawFd;
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 
@@ -40,7 +42,7 @@ fn main() {
                         Stdio::from(output.stdout.unwrap())
                     });
 
-                    let stdout = if commands.peek().is_some() {
+                    let mut stdout = if commands.peek().is_some() {
                         Stdio::piped()
                     } else {
                         Stdio::inherit()
@@ -58,11 +60,13 @@ fn main() {
                             if let Some(file) = args.next() {
                                 output_file = file;
                             }
+                            let flags = OFlag::O_RDWR | OFlag::O_CREAT;
+                            let fd =
+                                open(output_file, flags, Mode::S_IRUSR | Mode::S_IWUSR).unwrap();
+                            let file = unsafe { File::from_raw_fd(fd) };
+                            stdout = Stdio::from(file);
                         }
                     }
-
-                    let flags = OFlag::O_RDWR | OFlag::O_CREAT;
-                    let fd = open(output_file, flags, Mode::S_IRUSR | Mode::S_IWUSR).unwrap();
 
                     let output = Command::new(command)
                         .args(arg_vecs)
