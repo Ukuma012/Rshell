@@ -49,6 +49,8 @@ fn main() {
                     };
 
                     let mut output_file = "";
+                    let mut overwrite = true;
+                    let mut append = false;
                     let mut arg_vecs = Vec::new();
                     while let Some(arg) = args.next_if(|s| !s.contains('>')) {
                         arg_vecs.push(arg);
@@ -56,11 +58,23 @@ fn main() {
 
                     if let Some(redir) = args.peek() {
                         if redir.contains('>') {
+                            if redir.contains(">>") {
+                                overwrite = false;
+                                append = true;
+                            }
                             args.next();
                             if let Some(file) = args.next() {
                                 output_file = file;
                             }
-                            let flags = OFlag::O_RDWR | OFlag::O_CREAT;
+
+                            let flags = if overwrite {
+                                OFlag::O_RDWR | OFlag::O_CREAT | OFlag::O_TRUNC
+                            } else if append {
+                                OFlag::O_RDWR | OFlag::O_CREAT | OFlag::O_APPEND
+                            } else {
+                                OFlag::O_RDWR | OFlag::O_CREAT
+                            };
+
                             let fd =
                                 open(output_file, flags, Mode::S_IRUSR | Mode::S_IWUSR).unwrap();
                             let file = unsafe { File::from_raw_fd(fd) };
